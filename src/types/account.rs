@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 use starknet_crypto::Felt;
 
 use crate::types::balance::BalanceModel;
+use crate::types::common::deserialize_i64_from_string_or_number;
 use crate::types::fee::TradingFeeModel;
 use crate::types::order::OpenOrderModel;
 use crate::types::position::PositionModel;
@@ -22,10 +23,8 @@ pub struct StarkPerpetualAccount {
 
 impl StarkPerpetualAccount {
     pub fn new(vault: u64, private_key: &str, public_key: &str, api_key: &str) -> Self {
-        let private_key = Felt::from_hex(private_key)
-            .expect("invalid private key hex");
-        let public_key = Felt::from_hex(public_key)
-            .expect("invalid public key hex");
+        let private_key = Felt::from_hex(private_key).expect("invalid private key hex");
+        let public_key = Felt::from_hex(public_key).expect("invalid public key hex");
 
         Self {
             vault,
@@ -70,12 +69,17 @@ impl StarkPerpetualAccount {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AccountModel {
-    #[serde(alias = "accountId")]
+    #[serde(
+        alias = "accountId",
+        deserialize_with = "deserialize_i64_from_string_or_number"
+    )]
     pub id: i64,
     pub description: String,
+    #[serde(deserialize_with = "deserialize_i64_from_string_or_number")]
     pub account_index: i64,
     pub status: String,
     pub l2_key: String,
+    #[serde(deserialize_with = "deserialize_i64_from_string_or_number")]
     pub l2_vault: i64,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub bridge_starknet_address: Option<String>,

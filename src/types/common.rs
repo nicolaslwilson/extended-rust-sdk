@@ -1,5 +1,22 @@
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
+/// API sometimes returns numeric IDs as JSON strings (e.g. `"337048"`).
+pub fn deserialize_i64_from_string_or_number<'de, D>(deserializer: D) -> Result<i64, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let v = serde_json::Value::deserialize(deserializer)?;
+    match v {
+        serde_json::Value::Number(n) => n
+            .as_i64()
+            .ok_or_else(|| serde::de::Error::custom("expected i64-compatible JSON number")),
+        serde_json::Value::String(s) => s.parse().map_err(serde::de::Error::custom),
+        _ => Err(serde::de::Error::custom(
+            "expected string or number for i64 field",
+        )),
+    }
+}
+
 /// Represents a hex-encoded integer value.
 /// Deserializes from hex string (e.g. "0x1a2b") or integer.
 /// Serializes to hex string.
