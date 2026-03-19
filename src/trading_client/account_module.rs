@@ -282,12 +282,7 @@ impl AccountModule {
     }
 
     pub async fn get_bridge_config(&self) -> X10Result<WrappedApiResponse<BridgesConfig>> {
-        let url = build_url(
-            &self.base_url,
-            "/user/bridge/config",
-            &HashMap::new(),
-            &[],
-        );
+        let url = build_url(&self.base_url, "/user/bridge/config", &HashMap::new(), &[]);
         self.http.get(&url, None).await
     }
 
@@ -310,19 +305,14 @@ impl AccountModule {
         self.http.get(&url, None).await
     }
 
-    pub async fn commit_bridge_quote(
-        &self,
-        id: &str,
-    ) -> X10Result<WrappedApiResponse<Value>> {
+    pub async fn commit_bridge_quote(&self, id: &str) -> X10Result<WrappedApiResponse<Value>> {
         let url = build_url(
             &self.base_url,
             "/user/bridge/quote",
             &HashMap::new(),
             &[("id", QueryValue::Single(id.to_string()))],
         );
-        self.http
-            .post::<Value, Value>(&url, None, None)
-            .await
+        self.http.post::<Value, Value>(&url, None, None).await
     }
 
     pub async fn transfer(
@@ -337,9 +327,16 @@ impl AccountModule {
         let to_l2_key_felt = Felt::from_hex(to_l2_key)
             .map_err(|e| X10Error::Validation(format!("invalid to_l2_key: {}", e)))?;
 
-        let request_model =
-            create_transfer_object(from_vault, to_vault, to_l2_key_felt, amount, &self.config, account, nonce)
-                .map_err(X10Error::Crypto)?;
+        let request_model = create_transfer_object(
+            from_vault,
+            to_vault,
+            to_l2_key_felt,
+            amount,
+            &self.config,
+            account,
+            nonce,
+        )
+        .map_err(X10Error::Crypto)?;
 
         let url = build_url(
             &self.base_url,
@@ -358,7 +355,7 @@ impl AccountModule {
         stark_address: Option<&str>,
         nonce: Option<u32>,
         quote_id: Option<String>,
-    ) -> X10Result<WrappedApiResponse<i64>> {
+    ) -> X10Result<WrappedApiResponse<Value>> {
         let account = self.account()?;
 
         if quote_id.is_none() && chain_id != "STRK" {
@@ -380,9 +377,7 @@ impl AccountModule {
                 .data
                 .ok_or_else(|| X10Error::Other("Client not found".into()))?;
             client.starknet_wallet_address.ok_or_else(|| {
-                X10Error::Validation(
-                    "Client does not have attached starknet_wallet_address".into(),
-                )
+                X10Error::Validation("Client does not have attached starknet_wallet_address".into())
             })?
         } else {
             acct.bridge_starknet_address.ok_or_else(|| {
@@ -403,12 +398,7 @@ impl AccountModule {
         )
         .map_err(X10Error::Crypto)?;
 
-        let url = build_url(
-            &self.base_url,
-            "/user/withdrawal",
-            &HashMap::new(),
-            &[],
-        );
+        let url = build_url(&self.base_url, "/user/withdrawal", &HashMap::new(), &[]);
         let body = serde_json::to_value(&request_model)?;
         self.http.post(&url, Some(&body), None).await
     }
