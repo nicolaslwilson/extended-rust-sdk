@@ -62,11 +62,12 @@ pub fn create_withdrawal_object(
 
     let (sig_r, sig_s) = stark_account.sign(hash);
 
-    let recipient_int = i128::from_str_radix(
-        recipient_stark_address.trim_start_matches("0x"),
-        16,
-    )
-    .map_err(|e| format!("invalid recipient address: {}", e))?;
+    let recipient_hex = recipient_stark_address.trim();
+    let recipient_hex = if recipient_hex.starts_with("0x") || recipient_hex.starts_with("0X") {
+        recipient_hex.to_string()
+    } else {
+        format!("0x{}", recipient_hex)
+    };
 
     let collateral_id_int = i128::from_str_radix(
         collateral_id_hex.trim_start_matches("0x"),
@@ -75,7 +76,7 @@ pub fn create_withdrawal_object(
     .map_err(|e| format!("invalid collateral_asset_on_chain_id: {}", e))?;
 
     let settlement = StarkWithdrawalSettlement {
-        recipient: HexValue::new(recipient_int),
+        recipient: HexValue::from_hex_string(recipient_hex),
         position_id: stark_account.vault(),
         collateral_id: HexValue::new(collateral_id_int),
         amount: stark_amount as i64,
